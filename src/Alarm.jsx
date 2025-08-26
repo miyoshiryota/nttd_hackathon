@@ -13,6 +13,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+// Haversine 
 function getDistance(pos1, pos2) {
   const [lat1, lon1] = pos1;
   const [lat2, lon2] = pos2;
@@ -45,11 +46,6 @@ export default function AlarmPage() {
     const alarmTime = localStorage.getItem("alarmTime");
     const snooze = localStorage.getItem("snooze");
 
-    if (!storedHome || !alarmTime || !snooze) {
-      alert("設定が見つかりません。設定画面に戻ります");
-      navigate("/");
-      return;
-    }
     setHome(JSON.parse(storedHome));
     snoozeRef.current = Number(snooze);
 
@@ -72,7 +68,7 @@ export default function AlarmPage() {
     }
 
     // アラーム時刻を計算してsetTimeout
-    scheduleNextAlarm(alarmTime);
+    // scheduleNextAlarm(alarmTime);
 
     return () => {
       // クリーンアップ
@@ -86,8 +82,10 @@ export default function AlarmPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
+  // これは設定画面でやるべき
   // 次回のアラーム（当日または翌日）
-  function scheduleNextAlarm(alarmTimeStr) {
+/*   function scheduleNextAlarm(alarmTimeStr) {
     const now = new Date();
     const [hh, mm] = alarmTimeStr.split(":").map((s) => Number(s));
     const target = new Date(now);
@@ -102,7 +100,7 @@ export default function AlarmPage() {
       onAlarmTimeReached();
     }, wait);
   }
-
+ */
   // アラーム時刻到来
   function onAlarmTimeReached() {
     setStatus("時刻到来。位置を確認します...");
