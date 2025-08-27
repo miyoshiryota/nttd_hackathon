@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Circle } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Leafletのデフォルトアイコン問題回避
+// Leafletのデフォルトアイコン問題回避（必要なら）
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -13,53 +12,55 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-
 export default function SettingPage() {
   const navigate = useNavigate();
   const [time, setTime] = useState("");
   const [snooze, setSnooze] = useState(5);
-  const [currentPos, setCurrentPos] = useState(null);
-  const [watchId, setWatchId] = useState(null);
-
-  // 起動時に現在地を取得して表示（地図上）
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      alert("位置情報が使えません");
-      return;
-    }
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        setCurrentPos([pos.coords.latitude, pos.coords.longitude]);
-      },
-      (err) => {
-        console.error("位置情報エラー:", err);
-      },
-      { enableHighAccuracy: true, maximumAge: 10000 }
-    );
-    setWatchId(id);
-    return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-      navigator.geolocation.clearWatch(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleSetAlarm = () => {
     if (!time) {
       alert("アラーム時刻を指定してください");
       return;
     }
-    if (!currentPos) {
-      alert("現在地が取得できていません");
+    if (snooze < 1) {
+      alert("スヌーズ間隔は1分以上にしてください");
       return;
     }
 
-    const home = { lat: currentPos[0], lng: currentPos[1] };
-    localStorage.setItem("alarmTime", time); // "HH:MM"
-    localStorage.setItem("snooze", String(snooze));
-    localStorage.setItem("home", JSON.stringify(home));
-    // 設定完了してアラーム画面へ遷移
-    navigate("/alarm");
+    // 過去時刻チェック
+    const now = new Date();
+    const [hh, mm] = time.split(":").map((s) => Number(s));
+    const target = new Date();
+    target.setHours(hh, mm, 0, 0);
+
+    if (target.getTime() <= now.getTime()) {
+      alert("過去の時刻は設定できません。未来の時刻を選んでください。");
+      return;
+    }
+
+    // === ここで現在地を取得 ===
+    if (!navigator.geolocation) {
+      alert("位置情報が使えません");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const home = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+        localStorage.setItem("alarmTime", time); // "HH:MM"
+        localStorage.setItem("snooze", String(snooze));
+        localStorage.setItem("home", JSON.stringify(home));
+        navigate("/alarm");
+      },
+      (err) => {
+        console.error("位置情報エラー:", err);
+        alert("現在地が取得できませんでした");
+      },
+      { enableHighAccuracy: true }
+    );
   };
 
   return (
@@ -67,7 +68,11 @@ export default function SettingPage() {
       <h1>アラーム設定</h1>
       <label>
         アラーム時刻:
-        <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+        />
       </label>
       <br />
       <label>
@@ -81,21 +86,6 @@ export default function SettingPage() {
       </label>
       <br />
       <button onClick={handleSetAlarm}>アラームを設定して次へ</button>
-
-      <div style={{ marginTop: 12 }}>
-        <h3>現在位置（これを自宅位置として保存します）</h3>
-        {currentPos ? (
-          <div className="map-wrap">
-            <MapContainer center={currentPos} zoom={17} style={{ height: "300px" }}>
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={currentPos} />
-              <Circle center={currentPos} radius={100} pathOptions={{ color: "blue", fillOpacity: 0.15 }} />
-            </MapContainer>
-          </div>
-        ) : (
-          <p>現在地を取得中…（ブラウザの位置情報許可を確認してください）</p>
-        )}
-      </div>
     </div>
   );
 }
