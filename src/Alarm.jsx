@@ -36,12 +36,14 @@ export default function AlarmPage() {
   const [alarmPlaying, setAlarmPlaying] = useState(false);
   const [currentPos, setCurrentPos] = useState(null);
   const [timeRest, setTimeRest] = useState(0);
-
+  const [track, setTrack] = useState([]);
+  const [trackingActive, setTrackingActive] = useState(false);
   const audioRef = useRef(null);
   const timerRef = useRef(null);
   const intervalRef = useRef(null);
   const watchRef = useRef(null);
   const snoozeRef = useRef(null);
+  const trackIntervalRef = useRef(null);
 
   useEffect(() => {
     const storedHome = localStorage.getItem("home");
@@ -51,15 +53,16 @@ export default function AlarmPage() {
     setHome(JSON.parse(storedHome));
     snoozeRef.current = Number(snooze);
 
-    // ***audio 準備（alarm班担当）
+    // ***audio 準備
     audioRef.current = new Audio("/alarm.mp3");
     audioRef.current.loop = true;
 
-    // 現在地監視（マップ表示用）
+    // 現在地監視
     if (navigator.geolocation) {
       const id = navigator.geolocation.watchPosition(
         (pos) => {
-          setCurrentPos([pos.coords.latitude, pos.coords.longitude]);
+          const cur = [pos.coords.latitude, pos.coords.longitude];
+          setCurrentPos(cur);
         },
         (err) => {
           console.error("位置情報エラー:", err);
@@ -69,14 +72,14 @@ export default function AlarmPage() {
       watchRef.current = id;
     }
 
-    // アラーム時刻を計算してsetTimeout
+    // アラーム時刻スケジュール
     scheduleNextAlarm(alarmTime);
 
     return () => {
-      // クリーンアップ
       if (timerRef.current) clearTimeout(timerRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (watchRef.current) navigator.geolocation.clearWatch(watchRef.current);
+      if (trackIntervalRef.current) clearInterval(trackIntervalRef.current);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
@@ -85,7 +88,25 @@ export default function AlarmPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 次回のアラーム（当日）
+  // trackingActive が true になったら、履歴追加開始
+  useEffect(() => {
+    if (!trackingActive) return;
+
+    trackIntervalRef.current = setInterval(() => {
+      if (currentPos) {
+        setTrack((prev) => {
+          const next = [...prev, currentPos];
+          return next.slice(-20); // 最新20件だけ保持
+        });
+      }
+    }, 30 * 1000);
+
+    return () => {
+      if (trackIntervalRef.current) clearInterval(trackIntervalRef.current);
+    };
+  }, [trackingActive]);
+
+  // 次回のアラーム
   function scheduleNextAlarm(alarmTimeStr) {
     const now = new Date();
     const [hh, mm] = alarmTimeStr.split(":").map((s) => Number(s));
@@ -96,7 +117,6 @@ export default function AlarmPage() {
     setStatus(`アラーム設定中 (${alarmTimeStr})`);
     setTimeRest(Math.round(wait / 1000));
 
-    // 1秒ごとに残り時間を更新
     intervalRef.current = setInterval(() => {
       setTimeRest((prev) => {
         if (prev <= 1) {
@@ -107,7 +127,6 @@ export default function AlarmPage() {
       });
     }, 1000);
 
-    // アラーム発動
     timerRef.current = setTimeout(() => {
       onAlarmTimeReached();
     }, wait);
@@ -116,6 +135,7 @@ export default function AlarmPage() {
   // アラーム時刻到来
   function onAlarmTimeReached() {
     setStatus("時刻到来。位置を確認します...");
+    setTrackingActive(true); 
     const storedHome = JSON.parse(localStorage.getItem("home"));
     if (!navigator.geolocation) {
       setStatus("位置情報利用不可のため終了");
@@ -140,17 +160,18 @@ export default function AlarmPage() {
     );
   }
 
-  // 鳴動処理開始
+  // 鳴動処理
   function startAlarmLoop() {
     setStatus("アラーム鳴動中（停止ボタンで停止）。最大15分で自動停止します");
     setAlarmPlaying(true);
 
-    // ***アラーム鳴らす処理（alarm班担当）-----------------
+    // アラーム鳴らす
+/*     if (audioRef.current) {
+      audioRef.current.play().catch((e) => console.error("再生失敗:", e));
+    }
+ */
 
 
-    // ------------------------------------------------
-
-    // 15分で強制停止し、スヌーズをスケジュール
     timerRef.current = setTimeout(() => {
       stopAlarmInternal();
       setStatus("15分経過によりアラーム停止。スヌーズをスケジュールします");
@@ -158,7 +179,6 @@ export default function AlarmPage() {
     }, 15 * 60 * 1000);
   }
 
-  // アラーム停止
   function stopAlarmInternal() {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -171,14 +191,12 @@ export default function AlarmPage() {
     }
   }
 
-  // ユーザーがアラーム停止を押したとき
   function handleStopButton() {
     stopAlarmInternal();
     setStatus("アラーム停止。スヌーズをスケジュールします");
     scheduleSnooze();
   }
 
-  // スヌーズ処理: snoozeRef.current 分後に再チェック
   function scheduleSnooze() {
     const snoozeMin = snoozeRef.current;
     setStatus(`スヌーズ中 (${snoozeMin}分後に再チェックします)`);
@@ -223,6 +241,9 @@ export default function AlarmPage() {
               pathOptions={{ color: "blue", fillOpacity: 0.12 }}
             />
             {currentPos && <Marker position={currentPos} />}
+            {track.map((p, i) => (
+              <Marker key={i} position={p} />
+            ))}
           </MapContainer>
         )}
       </div>
@@ -238,7 +259,6 @@ export default function AlarmPage() {
         <button onClick={() => navigate("/")}>設定に戻る</button>
       </div>
 
-      {/* デバッグ用に残す */}
       <p>残り時間: {timeRest} 秒</p>
       <p>設定アラーム: {localStorage.getItem("alarmTime")}</p>
     </div>
