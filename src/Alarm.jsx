@@ -29,21 +29,45 @@ function getDistance(pos1, pos2) {
   return R * c;
 }
 
+// 残り秒 -> "m:ss"
+function fmtMMSS(totalSec) {
+  const s = Math.max(0, Number(totalSec) | 0);
+  const m = Math.floor(s / 60);
+  const ss = String(s % 60).padStart(2, "0");
+  return `${m}:${ss}`;
+}
+
+// 時刻(ms) -> "HH:MM"
+function fmtHHMM(ts) {
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 export default function AlarmPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("セット済み。アラームを待機中...");
   const [home, setHome] = useState(null);
   const [alarmPlaying, setAlarmPlaying] = useState(false);
   const [currentPos, setCurrentPos] = useState(null);
+
+  // 残り時間（次のチェックまで）
   const [timeRest, setTimeRest] = useState(0);
+  // 表示用：次回アラーム“予定時刻”
+  const [nextAlarmTs, setNextAlarmTs] = useState(null);
+
   const [track, setTrack] = useState([]);
   const [trackingActive, setTrackingActive] = useState(false);
+
   const audioRef = useRef(null);
   const timerRef = useRef(null);
   const intervalRef = useRef(null);
   const watchRef = useRef(null);
   const snoozeRef = useRef(null);
   const trackIntervalRef = useRef(null);
+  // スヌーズ加算の“基準”にする直前の予定時刻
+  const nextAlarmTsRef = useRef(null);
 
   useEffect(() => {
     const storedHome = localStorage.getItem("home");
@@ -51,9 +75,9 @@ export default function AlarmPage() {
     const snooze = localStorage.getItem("snooze");
 
     setHome(JSON.parse(storedHome));
-    snoozeRef.current = Number(snooze);
+    snoozeRef.current = Number(snooze); // App側の入力値
 
-    // ***audio 準備
+    // audio 準備
     audioRef.current = new Audio("/alarm.mp3");
     audioRef.current.loop = true;
 
@@ -72,7 +96,7 @@ export default function AlarmPage() {
       watchRef.current = id;
     }
 
-    // アラーム時刻スケジュール
+    // 初回のアラーム予約
     scheduleNextAlarm(alarmTime);
 
     return () => {
@@ -104,32 +128,73 @@ export default function AlarmPage() {
     return () => {
       if (trackIntervalRef.current) clearInterval(trackIntervalRef.current);
     };
-  }, [trackingActive]);
+  }, [trackingActive, currentPos]);
 
-  // 次回のアラーム
+  // 共通：targetMs までの残り秒を更新
+  function startCountdownTo(targetMs) {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const tick = () => {
+      const remain = Math.max(0, Math.round((targetMs - Date.now()) / 1000));
+      setTimeRest(remain);
+      if (remain <= 0 && intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+    tick();
+    intervalRef.current = setInterval(tick, 1000);
+  }
+
+  // 初回のアラーム予約（HH:MM入力から）
   function scheduleNextAlarm(alarmTimeStr) {
     const now = new Date();
     const [hh, mm] = alarmTimeStr.split(":").map((s) => Number(s));
     const target = new Date(now);
     target.setHours(hh, mm, 0, 0);
 
-    const wait = target.getTime() - now.getTime();
+    const targetMs = target.getTime();
     setStatus(`アラーム設定中 (${alarmTimeStr})`);
-    setTimeRest(Math.round(wait / 1000));
+    setNextAlarmTs(targetMs);
+    nextAlarmTsRef.current = targetMs;           // ★ 以降のスヌーズ加算の基準
+    startCountdownTo(targetMs);
 
-    intervalRef.current = setInterval(() => {
-      setTimeRest((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(onAlarmTimeReached, Math.max(0, targetMs - Date.now()));
+  }
 
+  // スヌーズ（★ “直前の予定時刻 + スヌーズ分” で次回を予約）
+  function scheduleSnoozePlus() {
+    const snoozeMin = Math.max(1, Number(snoozeRef.current) || 5);
+    const base = nextAlarmTsRef.current ?? Date.now(); // 直前の“予定時刻”が基準
+    const newTs = base + snoozeMin * 60 * 1000;
+
+    setStatus(`スヌーズ中（${snoozeMin}分後に再チェック）`);
+    setNextAlarmTs(newTs);             // 表示用
+    nextAlarmTsRef.current = newTs;    // 次の基準
+    startCountdownTo(newTs);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      onAlarmTimeReached();
-    }, wait);
+      const storedHome = JSON.parse(localStorage.getItem("home"));
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const cur = [pos.coords.latitude, pos.coords.longitude];
+          const dist = getDistance(cur, [storedHome.lat, storedHome.lng]);
+          if (dist > 100) {
+            setStatus("スヌーズ時の確認: 自宅外のためアラーム終了");
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            setTimeRest(0);
+          } else {
+            startAlarmLoop();
+          }
+        },
+        (err) => {
+          console.error("位置情報エラー:", err);
+          // 取得失敗時も“予定時刻 + スヌーズ分”で再スケジュール
+          scheduleSnoozePlus();
+        },
+        { enableHighAccuracy: true }
+      );
+    }, Math.max(0, newTs - Date.now()));
   }
 
   // アラーム時刻到来
@@ -147,6 +212,8 @@ export default function AlarmPage() {
         const dist = getDistance(cur, [storedHome.lat, storedHome.lng]);
         if (dist > 100) {
           setStatus("自宅から100mより外にいるためアラーム終了");
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setTimeRest(0);
         } else {
           startAlarmLoop();
         }
@@ -154,7 +221,7 @@ export default function AlarmPage() {
       (err) => {
         console.error("位置情報エラー:", err);
         setStatus("位置情報取得に失敗。再試行をスヌーズで行います");
-        scheduleSnooze();
+        scheduleSnoozePlus(); // ★ 初回でも“予定時刻 + スヌーズ”で
       },
       { enableHighAccuracy: true }
     );
@@ -165,17 +232,15 @@ export default function AlarmPage() {
     setStatus("アラーム鳴動中（停止ボタンで停止）。最大15分で自動停止します");
     setAlarmPlaying(true);
 
-    // アラーム鳴らす
-     if (audioRef.current) {
+    if (audioRef.current) {
       audioRef.current.play().catch((e) => console.error("再生失敗:", e));
-     }
-     
+    }
 
-
+    if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       stopAlarmInternal();
       setStatus("15分経過によりアラーム停止。スヌーズをスケジュールします");
-      scheduleSnooze();
+      scheduleSnoozePlus(); // ★ 自動停止後も“予定時刻 + スヌーズ”
     }, 15 * 60 * 1000);
   }
 
@@ -194,31 +259,7 @@ export default function AlarmPage() {
   function handleStopButton() {
     stopAlarmInternal();
     setStatus("アラーム停止。スヌーズをスケジュールします");
-    scheduleSnooze();
-  }
-
-  function scheduleSnooze() {
-    const snoozeMin = snoozeRef.current;
-    setStatus(`スヌーズ中 (${snoozeMin}分後に再チェックします)`);
-    timerRef.current = setTimeout(() => {
-      const storedHome = JSON.parse(localStorage.getItem("home"));
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const cur = [pos.coords.latitude, pos.coords.longitude];
-          const dist = getDistance(cur, [storedHome.lat, storedHome.lng]);
-          if (dist > 100) {
-            setStatus("スヌーズ時の確認: 自宅外のためアラーム終了");
-          } else {
-            startAlarmLoop();
-          }
-        },
-        (err) => {
-          console.error("位置情報エラー:", err);
-          scheduleSnooze();
-        },
-        { enableHighAccuracy: true }
-      );
-    }, snoozeMin * 60 * 1000);
+    scheduleSnoozePlus(); // ★ 停止ボタンでも“予定時刻 + スヌーズ”
   }
 
   return (
@@ -259,8 +300,11 @@ export default function AlarmPage() {
         <button onClick={() => navigate("/")}>設定に戻る</button>
       </div>
 
-      <p>残り時間: {timeRest} 秒</p>
-      <p>設定アラーム: {localStorage.getItem("alarmTime")}</p>
+      {/* 表示：次回アラームと残り時間（mm:ss） */}
+      <p>次回アラーム: {nextAlarmTs ? fmtHHMM(nextAlarmTs) : "-"}</p>
+      <p>残り時間: {fmtMMSS(timeRest)}</p>
+      <p>設定アラーム（初回）: {localStorage.getItem("alarmTime")}</p>
+      <p>スヌーズ: {snoozeRef.current || 5} 分</p>
     </div>
   );
 }
