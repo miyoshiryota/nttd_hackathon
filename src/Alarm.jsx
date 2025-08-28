@@ -168,8 +168,8 @@ export default function AlarmPage() {
     // アラーム鳴らす
      if (audioRef.current) {
       audioRef.current.play().catch((e) => console.error("再生失敗:", e));
-    }
- 
+     }
+     
 
 
     timerRef.current = setTimeout(() => {
