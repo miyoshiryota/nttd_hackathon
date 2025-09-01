@@ -1,3 +1,7 @@
+/* src/styles/style.css の一番上 */
+@import url('https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400&display=swap');
+
+
 html {
     color: #28373c;
     font-family: "Kiwi Maru";
