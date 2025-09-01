@@ -1,0 +1,293 @@
+html {
+    color: #28373c;
+    font-family: "Kiwi Maru";
+}
+
+.kiwi-maru-light {
+  font-family: "Kiwi Maru", serif;
+  font-weight: 300;
+  font-style: normal;
+}
+.kiwi-maru-regular {
+  font-family: "Kiwi Maru", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+header {
+    border-bottom: 2px dashed #009bc6;
+    font-family: "Kiwi Maru";
+}
+
+body {
+    text-align: center;
+}
+
+h1 {
+    color: #045e81;
+    font-weight: bold;
+    text-align: center;
+    max-width: 600px;
+    display: block;
+    margin: 0 auto;
+    font-size: clamp(35px, 5vw, 60px);
+}
+
+.alarm {
+    font-family: "Kiwi Maru";
+    font-size: 70px;
+}
+
+p {
+    font-family: "Kiwi Maru";
+}
+
+.indexsettitle {
+    font-family: "Kiwi Maru";
+    font-size: 20px;
+    font-weight: 400;
+    color: white;
+    background-color: #009bc6;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #009bc6;
+    border-radius: 90px;
+    padding: 4px 30px;
+    max-width: 500px;
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* 調整中のため一応残す
+.indexsettitle {
+    font-family: "Kiwi Maru";
+    color: white;
+    background-color: #009bc6;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #009bc6;
+    border-radius: 90px;
+    display: inline-block;
+    padding: 4px 30px;
+}
+*/
+
+.outputsettitle {
+    font-family: "Kiwi Maru";
+    border-style: solid;
+    border-width: 2px;
+    border-color: #009bc6;
+    border-radius: 90px;
+    padding: 4px 30px;
+    max-width: 500px;
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0 0;
+    gap: 30px;
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.item label {
+    font-size: 18px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.item input {
+    box-sizing: border-box;
+    border: 1px solid #009bc6;
+    border-radius: 90px;
+    padding: 5px 15px;
+}
+
+#alarmDate {
+    width: 200px;
+    height: 40px;
+    padding-left: 14px;
+}
+
+#alarmTime {
+    width: 200px;
+    height: 40px;
+    padding-left: 14px;
+}
+
+.item select {
+    width: 100px;
+    box-sizing: border-box;
+    border: 1px solid #009bc6;
+    border-radius: 90px;
+}
+
+#snoozeMinutes {
+    width: 430px;
+    height: 40px;
+    padding-left: 14px;
+    text-align: center; 
+}
+
+.label-DTData {
+    font-size: 18px;
+    text-align: center;
+    color: white;
+    background-color: #009bc6;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #009bc6;
+    border-radius: 90px;
+    padding: 4px 50px;
+}
+
+.label-SMData {
+    font-size: 18px;
+    text-align: center;
+    color: white;
+    background-color: #009bc6;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #009bc6;
+    border-radius: 90px;
+    padding: 4px 30px;
+}
+
+#alarmDateTimeData {
+    font-size: 25px;
+    margin-bottom: 5px;
+}
+
+#snoozeMinutesData {
+    font-size: 25px;
+    margin-bottom: 5px;
+}
+
+@media screen and (max-width: 480px) {
+    .indexsettitle {
+        font-family: "Kiwi Maru";
+        color: white;
+        background-color: #009bc6;
+        border-style: solid;
+        border-width: 2px;
+        border-color: #009bc6;
+        border-radius: 90px;
+        padding: 4px 10px;
+        max-width: 300px;
+        display: block;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .outputsettitle {
+        font-family: "Kiwi Maru";
+        border-style: solid;
+        border-width: 2px;
+        border-color: #009bc6;
+        border-radius: 90px;
+        padding: 4px 10px;
+        max-width: 300px;
+        display: block;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .item label {
+        font-size: 18px;
+        margin-bottom: 0px;
+        text-align: center;
+    }
+
+    .item input {
+        box-sizing: border-box;
+        border: 1px solid #009bc6;
+        border-radius: 90px;
+        padding: 5px 15px;
+    }
+
+    #alarmDate {
+        width: 280px !important;
+        height: 40px;
+        padding-left: 14px;
+    }
+
+    #alarmTime {
+        width: 280px !important;
+        height: 40px;
+        padding-left: 14px;
+    }
+
+    #snoozeMinutes {
+        width: 280px !important;
+        height: 40px;
+        padding-left: 14px;
+        text-align: center; 
+    }
+}
+
+.btn1 {
+    display: inline-block;
+	text-align: center;
+	text-decoration: none;
+    font-family: "Kiwi Maru";
+    font-size: 25px;
+    height: 60px;
+	width: 260px;
+    margin: 50px;
+	padding: 4px 30px;
+	font-weight: bold;
+	border: 2px solid #009bc6;
+	color: #28373c;
+	border-radius: 90px;
+	transition: 0.5s;
+    background: white;
+}
+
+.btn1:hover {
+    color: white;
+	background: #009bc6;
+}
+
+.btn2 {
+    display: inline-block;
+	text-align: center;
+	text-decoration: none;
+    font-family: "Kiwi Maru";
+    font-size: 25px;
+    height: 60px;
+	width: 260px;
+    margin: 50px;
+	padding: 4px 30px;
+	font-weight: bold;
+	border: 4px solid #009bc6;
+	color: white;
+	border-radius: 90px;
+	transition: 0.5s;
+    background: #009bc6;
+}
+
+.btn2:hover {
+    color: #009bc6;
+	background: white;
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>強制移動アラーム</title>
+<meta name="description" content="絶対に時間通りに家を出られるアラーム">
+<link rel="stylesheet" href="CSS/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<header>
+    <h1>強制移動アラーム</h1>
+    <p>強制移動アラームを使って、遅刻を回避しよう！</p>
+</header>
+<body>
+<main>
+    <section>
+        <br>
+        <br>
+        <div>2025年8月25日月曜日</div>
+        <div class="alarm">19:05:43</div><br>
+        <div>（↑ここにアラームを挿入↑）</div>
+    </section>
+    <button class="btn2">アラームを停止</button>
+    <section>
+        <h3 class="outputsettitle">現在地</h3>
+        <p>（ここに地図を挿入）</p>
+        <h3 class="outputsettitle">アラームを確認</h3>
+        <div class="container">
+            <div class="item">
+                <label class="label-DTData">設定日時</label>
+                <p id="alarmDateTimeData"></p>
+            </div>
+            <div class="item">
+                <label class="label-SMData">スヌーズ間隔</label>
+                <p id="snoozeMinutesData"></p>
+            <script>  
+                const params = new URLSearchParams(window.location.search);
+                const alarmDatetime = params.get("alarmDatetime");
+                const snoozeMinutes = params.get("snoozeMinutes");
+
+                if (alarmDatetime) {
+                    const d = new Date(alarmDatetime);
+                    const mm = String(d.getMonth() + 1).padStart(2, "0");
+                    const dd = String(d.getDate()).padStart(2, "0");
+                    const hh = String(d.getHours()).padStart(2, "0");
+                    const mi = String(d.getMinutes()).padStart(2, "0");
+                    document.getElementById("alarmDateTimeData").textContent =
+                    `${mm}月${dd}日${hh}:${mi}`;
+                }
+
+                if (snoozeMinutes) {
+                    document.getElementById("snoozeMinutesData").textContent = 
+                    `${snoozeMinutes}分`;   
+                }
+
+            </script>
+            </div>
+        </div>
+    </section>

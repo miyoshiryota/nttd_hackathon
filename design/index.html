@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>強制移動アラーム</title>
+<meta name="description" content="絶対に時間通りに家を出られるアラーム">
+<link rel="stylesheet" href="CSS/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<header>
+    <h1>強制移動アラーム</h1>
+    <p>強制移動アラームを使って、遅刻を回避しよう！</p>
+</header>
+<body>
+<main>
+    <section>
+        <br>
+        <br>
+        <div>2025年8月25日月曜日</div>
+        <div class="alarm">19:05:43</div><br>
+        <div>（↑ここにアラームを挿入↑）</div>
+        <br>
+    </section>
+ <section>
+        <form action="output.html" method="get" onsubmit="combineDateTime()">
+            <h3 class="indexsettitle">日時を設定</h3>
+                <div class="container">
+                    <div class="item">
+                            <label for="alarmDate">日付</label>
+                            <input type="date" id="alarmDate" required>
+                    </div>
+                    <div class="item">
+                            <label for="alarmTime">時間</label>
+                            <input type="time" id="alarmTime" required>
+                    </div>
+                    <input type="hidden" id="alarmDatetime" name="alarmDatetime">
+                </div>
+                    <script>
+                        const now = new Date();
+
+                        function formatDate(d) {
+                            const yyyy = d.getFullYear();
+                            const mm = String(d.getMonth() + 1).padStart(2, "0");
+                            const dd = String(d.getDate()).padStart(2, "0");
+                            return `${yyyy}-${mm}-${dd}`;
+                        }
+
+                        const today = formatDate(now);
+                        document.getElementById("alarmDate").min = today;
+
+                        const weekLater = new Date();
+                        weekLater.setDate(now.getDate() + 7);
+                        const maxDay = weekLater.toISOString().split("T")[0];
+                        document.getElementById("alarmDate").max = maxDay;
+
+                        const alarmDate = document.getElementById("alarmDate");
+                        const alarmTime = document.getElementById("alarmTime");
+
+                        alarmDate.addEventListener("change", () => {
+                            if (alarmDate.value === today) {
+                                const hh = String(now.getHours()).padStart(2, "0");
+                                const mm = String(now.getMinutes()).padStart(2, "0");
+                            alarmTime.min = `${hh}:${mm}`;
+                            } else {
+                                alarmTime.removeAttribute("min");
+                            }
+                        });
+                        function combineDateTime() {
+                            if (alarmDate.value && alarmTime.value) {
+                                document.getElementById("alarmDatetime").value =
+                                    alarmDate.value + "T" + alarmTime.value;
+                            }
+                        }
+                    </script>
+                    <!-- 現在時刻から1週間後まで設定可能・日付と時間をひとまとまりで取得可能になっているはずです↑ -->
+                </div>
+                <br>
+                <br>
+                <h3 class="indexsettitle">スヌーズを設定</h3>
+                    <div class="container">
+                        <div class="item">
+                            <label for=snoozeMinutes>間隔</label>
+                            <select id="snoozeMinutes" name="snoozeMinutes" required></select>
+                        </div>
+                        <script>
+                            const snoozeSelect = document.getElementById("snoozeMinutes");
+                            for (let i = 3; i <= 15; i++) {
+                                const option = document.createElement("option");
+                                option.value = i;
+                                option.textContent = `${i}分`;
+                                snoozeSelect.appendChild(option);
+                            }
+                        </script>
+                        <!-- 3-15分の間で1分間隔で設定可能にしています↑ -->
+                    </div>
+            <input type="submit" value="アラームを設定" class="btn1">
+         </form>
+    </section>
+
+</main>
+</body>
+</html>
