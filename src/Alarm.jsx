@@ -294,6 +294,8 @@ export default function Alarm() {
         </button>
       )}
 
+      <br />
+
       <section>
         <h3 className="outputsettitle">現在地</h3>
         {home && (
