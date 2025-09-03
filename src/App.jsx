@@ -43,6 +43,25 @@ export default function App() {
     const storedDate = localStorage.getItem("alarmDate");
     if (storedTime) setAlarmTime(storedTime);
     if (storedDate) setAlarmDate(storedDate);
+
+    // 📍 追加: 現在地を自動で home に設定
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const h = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          localStorage.setItem("home", JSON.stringify(h));
+        },
+        (err) => {
+          console.error("位置情報の取得に失敗しました:", err);
+          alert("位置情報が取得できませんでした。ブラウザの設定を確認してください。");
+        }
+      );
+    } else {
+      alert("このブラウザは位置情報をサポートしていません。");
+    }
   }, []);
 
   // 日付変更時に minTime を切り替え
@@ -73,8 +92,6 @@ export default function App() {
     localStorage.setItem("alarmDate", alarmDate);
     localStorage.setItem("alarmTime", alarmTime);
     localStorage.setItem("snooze", String(snooze));
-
-    // 必要に応じて他の既存キー（home, radius など）があればここで保存/検証
 
     navigate("/alarm");
   };
