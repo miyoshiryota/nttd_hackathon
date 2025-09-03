@@ -85,15 +85,62 @@ export default function Alarm() {
     return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
   };
 
+  // アラームのループを完全終了する
+  const endAlarmLoop = () => {
+  // 鳴ってたら念のため止める
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    if (geoIntervalRef.current) {
+      clearInterval(geoIntervalRef.current);
+      geoIntervalRef.current = null;
+    }
+    if (maxRingTimeoutRef.current) {
+      clearTimeout(maxRingTimeoutRef.current);
+      maxRingTimeoutRef.current = null;
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    // 次回予定をクリア
+    schedBaseRef.current = null;
+    localStorage.removeItem("alarmDate");
+    localStorage.removeItem("alarmTime");
+
+    setRemainLabel("--:--");
+    setStatus("自宅外と判定：アラームを終了しました");
+  };
+
+
   // ---------- アラーム ----------
   const startRinging = async () => {
     setStatus("アラーム鳴動中");
+    const sound = localStorage.getItem("alarmSound") || "alarm.mp3";
     if (!audioRef.current) {
-      audioRef.current = new Audio("/alarm.mp3");
+      audioRef.current = new Audio();
       audioRef.current.loop = true;
     }
-    try { await audioRef.current.play(); } catch {}
-
+    // 音源を毎回同期（選択の変更や404に強くする）
+    const targetSrc = `/${sound}`;
+    const currentSrc = audioRef.current.src;
+    const absTarget = new URL(targetSrc, window.location.origin).href;
+    if (currentSrc !== absTarget) {
+      audioRef.current.src = targetSrc;
+      audioRef.current.load();
+    }
+    try {
+      await audioRef.current.play();
+    } catch (e) {
+      console.error("音声再生に失敗:", e);
+      setStatus("音声の自動再生に失敗しました。画面を一度タップしてから再試行してください。");
+    }
     // 鳴動を最大15分で自動停止
     if (maxRingTimeoutRef.current) clearTimeout(maxRingTimeoutRef.current);
     maxRingTimeoutRef.current = setTimeout(() => stopRinging(), 15 * 60 * 1000);
@@ -160,12 +207,16 @@ export default function Alarm() {
         setCurPos(p);
         setTrack(prev => [...prev.slice(-29), p]);
         const dist = getDistanceMeters([latitude, longitude], [home.lat, home.lng]);
-        if (dist <= radius) startRinging();
-        else { setStatus("自宅外と判定：次回へスヌーズ"); scheduleNextBySnooze(); }
+        if (dist <= radius) {
+          startRinging(); // 円内 → 鳴らす
+        } else {
+          endAlarmLoop(); // 円外 → ループ終了（スヌーズしない）
+        }
       },
-      () => { startRinging(); }
-    );
+      () => { startRinging(); } // 取得失敗は従来通り安全側で鳴らす
+   );
   };
+
 
   const tick = () => {
     const now = new Date();
@@ -237,7 +288,11 @@ export default function Alarm() {
         <div className="outputsettitle">{status}</div>
       </section>
 
-      <button className="btn2" onClick={stopAlarm}>アラームを停止</button>
+      {status === "アラーム鳴動中" && (
+        <button className="btn2" onClick={stopAlarm}>
+          アラームを停止
+        </button>
+      )}
 
       <section>
         <h3 className="outputsettitle">現在地</h3>

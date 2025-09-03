@@ -16,6 +16,10 @@ export default function App() {
     const v = localStorage.getItem("snooze");
     return v ? Number(v) : 3;
   });
+  //追加：アラーム音の選択（初期値はalarm.mp3)
+  const [alarmSound, setAlarmSound] = useState(() => {
+    return localStorage.getItem("alarmSound") || "alarm.mp3";
+  });
 
   // デザインHTMLの要件：今日〜1週間後、今日を選んだら時刻のminを現在時刻にする
   const [minDate, setMinDate] = useState("");
@@ -92,6 +96,7 @@ export default function App() {
     localStorage.setItem("alarmDate", alarmDate);
     localStorage.setItem("alarmTime", alarmTime);
     localStorage.setItem("snooze", String(snooze));
+    localStorage.setItem("alarmSound", alarmSound);
 
     navigate("/alarm");
   };
@@ -103,6 +108,9 @@ export default function App() {
         <h1>強制移動アラーム</h1>
         <p>強制移動アラームを使って、遅刻を回避しよう！</p>
       </header>
+
+      <br />
+      <br />
 
       {/* ───────── 設定フォーム（既存ハンドラは無改変）───────── */}
       <section>
@@ -147,7 +155,7 @@ export default function App() {
           <h3 className="indexsettitle">スヌーズを設定</h3>
           <div className="container">
             <div className="item">
-              <label htmlFor="snoozeMinutes">間隔</label>
+              <label htmlFor="snoozeMinutes"></label>
               <select
                 id="snoozeMinutes"
                 required
@@ -159,6 +167,25 @@ export default function App() {
                     {m}分
                   </option>
                 ))}
+              </select>
+            </div>
+          </div>
+
+          <br />
+          <br />
+
+          {/* アラーム音の選択 */}
+          <h3 className="indexsettitle">アラーム音を選択</h3>
+          <div className="container">
+            <div className="item">
+              <label htmlFor="alarmSound">アラーム音</label>
+              <select
+                id="alarmSound"
+                value={alarmSound}
+                onChange={(e) => setAlarmSound(e.target.value)}
+              >
+                <option value="alarm.mp3">ピピピピッ系</option>
+                <option value="alarm2.mp3">ジリジリジリ系</option>
               </select>
             </div>
           </div>
