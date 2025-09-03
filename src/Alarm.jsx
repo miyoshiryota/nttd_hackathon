@@ -302,7 +302,7 @@ export default function Alarm() {
           <MapContainer
             center={home}
             zoom={16}
-            style={{ height: 320, borderRadius: 12, overflow: "hidden", margin: "12px auto", maxWidth: 720 }}
+            style={{ height: 320, width: 550, borderRadius: 12, overflow: "hidden", margin: "12px auto" , maxwidth: 720}}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
