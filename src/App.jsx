@@ -1,27 +1,20 @@
-// src/App.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-// ← 1回だけでOK：デザインCSSを読み込む（置き場所: src/styles/style.css）
 import "./styles/style.css";
 
 export default function App() {
   const navigate = useNavigate();
-
-  // 既存のロジックはそのまま使えるよう、必要最低限の状態だけ管理
   const [alarmDate, setAlarmDate] = useState(""); // "YYYY-MM-DD"
   const [alarmTime, setAlarmTime] = useState(""); // "HH:MM"
   const [snooze, setSnooze] = useState(() => {
-    // 既存と整合：localStorageにあれば初期値に反映
     const v = localStorage.getItem("snooze");
     return v ? Number(v) : 3;
   });
-  //追加：アラーム音の選択（初期値はalarm.mp3)
   const [alarmSound, setAlarmSound] = useState(() => {
     return localStorage.getItem("alarmSound") || "alarm.mp3";
   });
 
-  // デザインHTMLの要件：今日〜1週間後、今日を選んだら時刻のminを現在時刻にする
+  // デザインHTMLの要件：今日〜1週間後、今日を選んだら時刻のminを現在時刻+1分にする
   const [minDate, setMinDate] = useState("");
   const [maxDate, setMaxDate] = useState("");
   const [minTime, setMinTime] = useState("");
@@ -29,7 +22,6 @@ export default function App() {
   useEffect(() => {
     const now = new Date();
     const toYMD = (d) => d.toISOString().split("T")[0];
-
     const today = toYMD(now);
     const weekLater = new Date(now);
     weekLater.setDate(now.getDate() + 7);
@@ -38,8 +30,10 @@ export default function App() {
     setMaxDate(toYMD(weekLater));
     setAlarmDate((prev) => prev || today);
 
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
+    // 「現在時刻 +1分」にする
+    const nowPlus1 = new Date(now.getTime() + 60 * 1000);
+    const hh = String(nowPlus1.getHours()).padStart(2, "0");
+    const mm = String(nowPlus1.getMinutes()).padStart(2, "0");
     setMinTime(`${hh}:${mm}`);
 
     // 既存設定がある場合に復元（任意）
@@ -48,7 +42,8 @@ export default function App() {
     if (storedTime) setAlarmTime(storedTime);
     if (storedDate) setAlarmDate(storedDate);
 
-    // 📍 追加: 現在地を自動で home に設定
+
+    // 現在地を自動で home に設定
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -68,24 +63,28 @@ export default function App() {
     }
   }, []);
 
-  // 日付変更時に minTime を切り替え
+  // 日付変更時に minTime を切り替え（当日選択なら現在時刻+1分）
   const handleChangeDate = (value) => {
     setAlarmDate(value);
     const today = new Date().toISOString().split("T")[0];
     if (value === today) {
       const now = new Date();
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
+      const nowPlus1 = new Date(now.getTime() + 60 * 1000); // +1分
+      const hh = String(nowPlus1.getHours()).padStart(2, "0");
+      const mm = String(nowPlus1.getMinutes()).padStart(2, "0");
       const mt = `${hh}:${mm}`;
       setMinTime(mt);
-      if (alarmTime && alarmTime < mt) setAlarmTime("");
+
+      // （既存の挙動は保持しているためここはそのまま）
+      if (alarmTime && alarmTime < mt) {
+        setAlarmTime(mt);
+      }
     } else {
       setMinTime(""); // 制約解除
     }
   };
 
-  // 既存のアラーム設定ボタンと同じ役割：
-  // localStorage へ保存 → /alarm へ遷移（既存 Alarm.jsx のロジックはそのまま動く）
+  // localStorage へ保存 → /alarm へ遷移
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!alarmDate || !alarmTime) {
@@ -103,7 +102,6 @@ export default function App() {
 
   return (
     <main>
-      {/* ───────── ヘッダー（デザインそのまま）───────── */}
       <header>
         <h1>強制移動アラーム</h1>
         <p>強制移動アラームを使って、遅刻を回避しよう！</p>
@@ -112,7 +110,6 @@ export default function App() {
       <br />
       <br />
 
-      {/* ───────── 設定フォーム（既存ハンドラは無改変）───────── */}
       <section>
         <form onSubmit={handleSubmit}>
           {/* 見出しの丸枠 */}
@@ -151,7 +148,7 @@ export default function App() {
           <br />
           <br />
 
-          {/* スヌーズ設定（丸枠見出し＋横並び） */}
+          {/* スヌーズ設定 */}
           <h3 className="indexsettitle">スヌーズを設定</h3>
           <div className="container">
             <div className="item">
@@ -174,7 +171,7 @@ export default function App() {
           <br />
           <br />
 
-          {/* アラーム音の選択 */}
+          {/* アラーム音 */}
           <h3 className="indexsettitle">アラーム音を選択</h3>
           <div className="container">
             <div className="item">
@@ -190,7 +187,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 決定ボタン（スタイルのみ付与、機能は handleSubmit が担当） */}
           <input type="submit" value="アラームを設定" className="btn1" />
         </form>
       </section>
