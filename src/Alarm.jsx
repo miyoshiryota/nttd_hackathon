@@ -1,4 +1,3 @@
-// src/Alarm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Circle } from "react-leaflet";
@@ -34,7 +33,7 @@ export default function Alarm() {
   const geoIntervalRef = useRef(null);
   const maxRingTimeoutRef = useRef(null);
 
-  // ---------- ユーティリティ ----------
+  // home取得
   const parseHome = () => {
     try {
       const s = localStorage.getItem("home");
@@ -47,6 +46,7 @@ export default function Alarm() {
     }
   };
 
+  // アラーム日時取得
   const getPlannedDate = () => {
     const d = localStorage.getItem("alarmDate");
     const t = localStorage.getItem("alarmTime");
@@ -56,6 +56,7 @@ export default function Alarm() {
     return isNaN(dt.getTime()) ? null : dt;
   };
 
+  // 2点間の距離計算
   const getDistanceMeters = ([lat1, lon1], [lat2, lon2]) => {
     const toRad = (d) => (d * Math.PI) / 180;
     const R = 6371000;
@@ -68,6 +69,7 @@ export default function Alarm() {
     return R * c;
   };
 
+  // 日時
   const fmtJpShort = (d) => {
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
@@ -76,6 +78,7 @@ export default function Alarm() {
     return `${mm}月${dd}日${hh}:${mi}`;
   };
 
+  // 残り時間
   const fmtRemain = (ms) => {
     const sec = Math.max(0, Math.floor(ms / 1000));
     const h = Math.floor(sec / 3600);
@@ -119,7 +122,7 @@ export default function Alarm() {
   };
 
 
-  // ---------- アラーム ----------
+  // アラーム開始 : 音楽再生(15分で自動停止), 10秒ごとに現在地更新
   const startRinging = async () => {
     setStatus("アラーム鳴動中");
     const sound = localStorage.getItem("alarmSound") || "alarm.mp3";
@@ -139,7 +142,7 @@ export default function Alarm() {
       await audioRef.current.play();
     } catch (e) {
       console.error("音声再生に失敗:", e);
-      setStatus("音声の自動再生に失敗しました。画面を一度タップしてから再試行してください。");
+      setStatus("音声の自動再生に失敗しました。");
     }
     // 鳴動を最大15分で自動停止
     if (maxRingTimeoutRef.current) clearTimeout(maxRingTimeoutRef.current);
@@ -162,6 +165,7 @@ export default function Alarm() {
     }
   };
 
+  // アラーム停止 : 音楽停止(15分で自動停止もクリア), 現在地取得停止
   const stopRinging = () => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
     if (geoIntervalRef.current) {
@@ -175,11 +179,11 @@ export default function Alarm() {
     setStatus("停止しました（スヌーズを再設定）");
   };
 
+  // スヌーズ後のアラーム時間設定
   const scheduleNextBySnooze = () => {
     const base = schedBaseRef.current ?? new Date();
     const next = new Date(base.getTime());
     next.setMinutes(next.getMinutes() + (snoozeMinRef.current || 3));
-
     const y = next.getFullYear();
     const m = String(next.getMonth() + 1).padStart(2, "0");
     const d = String(next.getDate()).padStart(2, "0");
@@ -187,17 +191,17 @@ export default function Alarm() {
     const mi = String(next.getMinutes()).padStart(2, "0");
     localStorage.setItem("alarmDate", `${y}-${m}-${d}`);
     localStorage.setItem("alarmTime", `${hh}:${mi}`);
-
     setAlarmDateTimeLabel(fmtJpShort(next));
     setSnoozeLabel(`${snoozeMinRef.current}分`);
-
     if (!intervalRef.current) intervalRef.current = setInterval(tick, 1000);
     setStatus("次回のアラームを予定しました");
     schedBaseRef.current = next;
   };
 
+  // ボタン押下時にアラーム停止 + スヌーズ設定
   const stopAlarm = () => { stopRinging(); scheduleNextBySnooze(); };
 
+  // 自宅半径100m以内であればアラームを鳴らし、以外であればアラーム停止
   const checkAndRingIfAtHome = () => {
     if (!home || !("geolocation" in navigator)) { startRinging(); return; }
     navigator.geolocation.getCurrentPosition(
@@ -217,7 +221,7 @@ export default function Alarm() {
    );
   };
 
-
+  // 残り時間の計算（1秒ごとに呼び出される）. 0秒になった時だけ鳴動判定
   const tick = () => {
     const now = new Date();
     const base = schedBaseRef.current;
