@@ -122,11 +122,11 @@ export default function App() {
   return (
     <main>
       <header style={{ textAlign: "center", padding: "16px 12px" }}>
-        <h1>強制移動アラーム</h1>
+        <h1>歩刑（とけい）</h1>
         <p style={{ margin: "10px 0 0", fontSize: "0.865rem", lineHeight: 1.5 }}>
           自宅からの脱出を保証！<br />
           100m以上移動しない限りアラームは鳴り止まない。<br />
-          遅刻常習犯のあなたにぴったりの<strong>強制移動アラーム！</strong><br />
+          遅刻常習犯のあなたにぴったりの<strong>歩刑（とけい）！</strong><br />
           ※位置情報を使用します。
         </p>
       </header>
@@ -207,6 +207,7 @@ export default function App() {
               >
                 <option value="alarm.mp3">ピピピピッ系</option>
                 <option value="alarm2.mp3">ジリジリジリ系</option>
+                <option value="OneSong.mp3">NTTデータのうた</option>
               </select>
             </div>
           </div>

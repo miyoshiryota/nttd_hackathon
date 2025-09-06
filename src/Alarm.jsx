@@ -302,7 +302,7 @@ export default function Alarm() {
   return (
     <main>
       <header>
-        <h1>強制移動アラーム</h1>
+        <h1>歩刑（とけい）</h1>
         <p>設定時刻までに家を出ないと・・・</p>
       </header>
 
@@ -359,6 +359,29 @@ export default function Alarm() {
             <p id="snoozeMinutesData" style={{ fontSize: 20 }}>{snoozeLabel}</p>
           </div>
         </div>
+  {/*       <button
+          className="btn1"
+          onClick={() => {
+            // ① プリム済み Audio を停止
+            if (window.__alarmEl) {
+              window.__alarmEl.pause();
+              window.__alarmEl.currentTime = 0;
+              window.__alarmEl = null;
+            }
+
+            // ② 設定系の localStorage をクリア
+            localStorage.removeItem("alarmDate");
+            localStorage.removeItem("alarmTime");
+            localStorage.removeItem("alarmSound");
+            localStorage.removeItem("snooze");
+
+            // ③ 設定画面に戻る
+            navigate("/");
+          }}
+        >
+          設定画面に戻る
+        </button> */}
+
       </section>
     </main>
   );
