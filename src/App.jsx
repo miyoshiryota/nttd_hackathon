@@ -203,7 +203,10 @@ export default function App() {
                 value={snooze}
                 onChange={(e) => setSnooze(Number(e.target.value))}
               >
-                {Array.from({ length: 15 }, (_, i) => 1 + i).map((m) => (
+                {[
+                  ...Array.from({ length: 15 }, (_, i) => i + 1),          // 1〜15分
+                  ...Array.from({ length: 9 }, (_, i) => (i + 4) * 5)      // 20,25,...,60分
+                ].map((m) => (
                   <option key={m} value={m}>
                     {m}分
                   </option>
