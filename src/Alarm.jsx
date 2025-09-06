@@ -281,7 +281,7 @@ export default function Alarm() {
     <main>
       <header>
         <h1>強制移動アラーム</h1>
-        <p>強制移動アラームを使って、遅刻を回避しよう！</p>
+        <p>設定時刻までに家を出ないと・・・</p>
       </header>
 
       <section>
@@ -289,11 +289,11 @@ export default function Alarm() {
       </section>
 
       <section style={{ marginTop: 12 }}>
-        <div className="outputsettitle">{status}</div>
+        <div className="indexsettitle">{status}</div>
       </section>
 
       {status === "アラーム鳴動中" && (
-        <button className="btn2" onClick={stopAlarm}>
+        <button className="btn1" onClick={stopAlarm}>
           アラームを停止
         </button>
       )}
@@ -306,7 +306,7 @@ export default function Alarm() {
           <MapContainer
             center={home}
             zoom={16}
-            style={{ height: 320, width: 550, borderRadius: 12, overflow: "hidden", margin: "12px auto" , maxwidth: 720}}
+            style={{ height: 320, borderRadius: 12, overflow: "hidden", margin: "12px auto" , maxWidth: 470}}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -315,7 +315,7 @@ export default function Alarm() {
             {/* home（自宅）ピン */}
             <Marker position={home} />
             {/* home半径の円 */}
-            <Circle center={home} radius={radius} pathOptions={{ color: "#2b6cb0", fillColor: "#4299e1", fillOpacity: 0.15 }} />
+            <Circle center={home} radius={radius} pathOptions={{ color: "#009bc6", fillColor: "#4299e1", fillOpacity: 0.15 }} />
             {/* 現在地ピン */}
             {curPos && <Marker position={curPos} />}
             {/* 履歴ピン */}
@@ -325,15 +325,16 @@ export default function Alarm() {
       </section>
 
       <section>
+        <br />
         <h3 className="outputsettitle">アラームを確認</h3>
         <div className="container">
           <div className="item">
             <label className="label-DTData">設定日時</label>
-            <p id="alarmDateTimeData" style={{ fontSize: 24 }}>{alarmDateTimeLabel}</p>
+            <p id="alarmDateTimeData" style={{ fontSize: 20 }}>{alarmDateTimeLabel}</p>
           </div>
           <div className="item">
             <label className="label-SMData">スヌーズ間隔</label>
-            <p id="snoozeMinutesData" style={{ fontSize: 24 }}>{snoozeLabel}</p>
+            <p id="snoozeMinutesData" style={{ fontSize: 20 }}>{snoozeLabel}</p>
           </div>
         </div>
       </section>
