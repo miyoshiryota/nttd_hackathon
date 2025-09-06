@@ -91,6 +91,20 @@ export default function App() {
       alert("日付と時刻を設定してください。");
       return;
     }
+    // 音声ファイルを一度だけ再生して「音声再生の許可」を確保する
+    const unlockAudio = async () => {
+      try {
+        const audio = new Audio("alarm.mp3");
+        audio.play();
+        setTimeout(() => {
+          audio.pause();
+          audio.currentTime = 0;
+        }, 1); // 1ms 再生
+      } catch (err) {
+        console.warn("音声再生が許可されませんでした:", err);
+      }
+    };
+    unlockAudio();
     // 既存実装と互換のため、時刻とスヌーズは従来キーで保存
     localStorage.setItem("alarmDate", alarmDate);
     localStorage.setItem("alarmTime", alarmTime);
