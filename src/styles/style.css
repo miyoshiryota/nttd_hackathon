@@ -186,6 +186,19 @@ p {
     padding: 5px;
 }
 
+#snoozeMinutes {
+    width: 280px;
+    height: 40px;
+    padding-left: 14px;
+}
+
+#alarmSound {
+    width: 430px;
+    height: 40px;
+    padding-left: 14px;
+    text-align: center; 
+}
+
 @media screen and (max-width: 480px) {
     .indexsettitle {
         font-family: "Kiwi Maru";
@@ -257,6 +270,12 @@ p {
         height: 40px;
         padding-left: 14px;
         text-align: center; 
+    }
+
+    #alarmSound {
+        width: 280px !important;
+        height: 40px;
+        padding-left: 14px;
     }
 }
 
