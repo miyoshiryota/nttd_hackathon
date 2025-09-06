@@ -127,7 +127,7 @@ export default function Alarm() {
     setStatus("アラーム鳴動中");
     const sound = localStorage.getItem("alarmSound") || "alarm.mp3";
 
-  // ★ ここがポイント：先頭でプリム済みaudioを拾う
+    // ★ ここがポイント：先頭でプリム済みaudioを拾う
     const primed = window.__alarmEl;
     if (primed) {
       try {
@@ -170,21 +170,6 @@ export default function Alarm() {
     if (maxRingTimeoutRef.current) clearTimeout(maxRingTimeoutRef.current);
     maxRingTimeoutRef.current = setTimeout(() => stopRinging(), 15 * 60 * 1000);
 
-    // 10秒ごとに現在地を更新して履歴に追加
-    if ("geolocation" in navigator && !geoIntervalRef.current) {
-      const updatePos = () => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            setCurPos(p);
-            setTrack(prev => [...prev.slice(-29), p]); // 最新30件保持
-          },
-          () => {}
-        );
-      };
-      updatePos();
-      geoIntervalRef.current = setInterval(updatePos, 10000);
-    }
   };
 
   // アラーム停止 : 音楽停止(15分で自動停止もクリア), 現在地取得停止
@@ -271,20 +256,29 @@ export default function Alarm() {
     snoozeMinRef.current = isNaN(sn) ? 3 : sn;
     setSnoozeLabel(`${snoozeMinRef.current}分`);
 
-    const h = parseHome(); setHome(h);
+    const h = parseHome(); 
+    setHome(h);
     const r = Number(localStorage.getItem("radius") || "100");
     setRadius(isNaN(r) ? 100 : r);
 
+    // 画面表示中は常に現在地を 10 秒ごとに更新
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          setCurPos(p);
-          setTrack([p]);
-        },
-        () => { if (h) { setCurPos(h); setTrack([h]); } }
-      );
-    } else if (h) { setCurPos(h); setTrack([h]); }
+      const updatePos = () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setCurPos(p);
+            setTrack(prev => [...prev.slice(-29), p]); // 最新30件保持
+          },
+          () => { if (h) { setCurPos(h); setTrack([h]); } }
+        );
+      };
+      updatePos();
+      geoIntervalRef.current = setInterval(updatePos, 10000);
+    } else if (h) {
+      setCurPos(h);
+      setTrack([h]);
+    }
 
     intervalRef.current = setInterval(tick, 1000);
     setStatus("予定時刻を監視中…");
@@ -292,11 +286,11 @@ export default function Alarm() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (geoIntervalRef.current) clearInterval(geoIntervalRef.current);
+      if (geoIntervalRef.current) clearInterval(geoIntervalRef.current); // ←追加
       if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
       if (maxRingTimeoutRef.current) clearTimeout(maxRingTimeoutRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   return (
