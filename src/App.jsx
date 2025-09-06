@@ -102,9 +102,14 @@ export default function App() {
 
   return (
     <main>
-      <header>
+      <header style={{ textAlign: "center", padding: "16px 12px" }}>
         <h1>強制移動アラーム</h1>
-        <p>強制移動アラームを使って、遅刻を回避しよう！</p>
+        <p style={{ margin: "10px 0 0", fontSize: "0.865rem", lineHeight: 1.5 }}>
+          自宅からの脱出を保証！<br />
+          100m以上移動しない限りアラームは鳴り止まない。<br />
+          遅刻常習犯のあなたにぴったりの<strong>強制移動アラーム！</strong><br />
+          ※位置情報を使用します。
+        </p>
       </header>
 
       <br />
@@ -186,10 +191,10 @@ export default function App() {
               </select>
             </div>
           </div>
-
           <input type="submit" value="アラームを設定" className="btn1" />
         </form>
       </section>
+      
     </main>
   );
 }
