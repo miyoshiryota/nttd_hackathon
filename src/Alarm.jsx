@@ -121,11 +121,33 @@ export default function Alarm() {
     setStatus("自宅外と判定：アラームを終了しました");
   };
 
-
+  
   // アラーム開始 : 音楽再生(15分で自動停止), 10秒ごとに現在地更新
   const startRinging = async () => {
     setStatus("アラーム鳴動中");
     const sound = localStorage.getItem("alarmSound") || "alarm.mp3";
+
+  // ★ ここがポイント：先頭でプリム済みaudioを拾う
+    const primed = window.__alarmEl;
+    if (primed) {
+      try {
+        const abs = new URL(`/${sound}`, window.location.origin).href;
+        if (primed.src !== abs) {
+          primed.pause();
+          primed.currentTime = 0;
+          primed.src = `/${sound}`;
+          primed.load();
+          await primed.play().catch(() => {});
+        }
+        primed.muted = false;        // ← ミュート解除
+        primed.volume = 1.0;
+        await primed.play();
+        audioRef.current = primed;   // 停止時に参照できるよう保持
+      } catch (e) {
+        console.warn("プリム済みaudioの再生に失敗。フォールバックします:", e);
+      }
+    }
+
     if (!audioRef.current) {
       audioRef.current = new Audio();
       audioRef.current.loop = true;

@@ -84,35 +84,40 @@ export default function App() {
     }
   };
 
-  // localStorage へ保存 → /alarm へ遷移
-  const handleSubmit = (e) => {
+  /// App.jsx の handleSubmit 内（抜粋）
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!alarmDate || !alarmTime) {
-      alert("日付と時刻を設定してください。");
+    if (!alarmDate || !alarmTime) { alert("日付と時刻を設定してください。"); return; }
+
+    // 1) 共有インスタンスを用意（あれば再利用）
+    const sound = localStorage.getItem("alarmSound") || "alarm.mp3";
+    const el = window.__alarmEl || new Audio();
+    el.loop = true;
+    el.preload = "auto";
+    const abs = new URL(`/${sound}`, window.location.origin).href;
+    if (el.src !== abs) { el.src = `/${sound}`; el.load(); }
+
+    try {
+      // 2) ユーザー操作中にミュートで再生開始（ここが“解除”の核）
+      el.muted = true;
+      await el.play();           // ★ 必ず await
+      window.__alarmEl = el;     // 3) グローバルに保持（遷移後も同じ要素を使う）
+    } catch (err) {
+      console.warn("音声の事前再生に失敗:", err);
+      alert("スマホ自動再生のために『音声を有効化』を先にタップしてください。");
       return;
     }
-    // 音声ファイルを一度だけ再生して「音声再生の許可」を確保する
-    const unlockAudio = async () => {
-      try {
-        const audio = new Audio("alarm.mp3");
-        audio.play();
-        setTimeout(() => {
-          audio.pause();
-          audio.currentTime = 0;
-        }, 1); // 1ms 再生
-      } catch (err) {
-        console.warn("音声再生が許可されませんでした:", err);
-      }
-    };
-    unlockAudio();
-    // 既存実装と互換のため、時刻とスヌーズは従来キーで保存
+
+    // 既存保存
     localStorage.setItem("alarmDate", alarmDate);
     localStorage.setItem("alarmTime", alarmTime);
     localStorage.setItem("snooze", String(snooze));
-    localStorage.setItem("alarmSound", alarmSound);
+    localStorage.setItem("alarmSound", sound);
 
+    // 4) 再生を維持したまま遷移（ミュートのまま走らせる）
     navigate("/alarm");
   };
+
 
   return (
     <main>
