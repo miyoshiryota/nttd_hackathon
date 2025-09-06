@@ -14,6 +14,26 @@ export default function App() {
     return localStorage.getItem("alarmSound") || "alarm.mp3";
   });
 
+  // ★音源変更のたびに localStorage と 共有 <audio> を同期
+  useEffect(() => {
+    localStorage.setItem("alarmSound", alarmSound);
+    if (window.__alarmEl) {
+      const el = window.__alarmEl;
+      const abs = new URL(`/${alarmSound}`, window.location.origin).href;
+      if (el.src !== abs) {
+        try {
+          el.pause();
+          el.currentTime = 0;
+          el.src = `/${alarmSound}`;
+          el.load();
+          // 許可維持のためミュートで先行再生（失敗は無視）
+          el.muted = true;
+          el.play().catch(() => {});
+        } catch {}
+      }
+    }
+  }, [alarmSound]);
+
   // デザインHTMLの要件：今日〜1週間後、今日を選んだら時刻のminを現在時刻+1分にする
   const [minDate, setMinDate] = useState("");
   const [maxDate, setMaxDate] = useState("");
@@ -90,7 +110,7 @@ export default function App() {
     if (!alarmDate || !alarmTime) { alert("日付と時刻を設定してください。"); return; }
 
     // 1) 共有インスタンスを用意（あれば再利用）
-    const sound = localStorage.getItem("alarmSound") || "alarm.mp3";
+    const sound = alarmSound || "alarm.mp3";
     const el = window.__alarmEl || new Audio();
     el.loop = true;
     el.preload = "auto";
